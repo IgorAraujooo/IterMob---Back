@@ -1,22 +1,39 @@
-/********************************************************
- * Objetivo: Controlador para realizar o CRUD de usuários
- * Data: 03/09/2024
- * Autor: Igor Araujo
- * Versão: 1.0
- ********************************************************/
-
 const message = require('../modulo/config.js');
 const usuarioDAO = require('../model/DAO/usuarios.js');
 
-// Função para listar todos os usuários
 const getListarUsuarios = async function() {
     try {
         let listarUsuarios = await usuarioDAO.selectAllUsers();
         let usuariosJSON = {};
 
         if (listarUsuarios && listarUsuarios.length > 0) {
-            usuariosJSON.usuarios = listarUsuarios;
-            usuariosJSON.quantidade = listarUsuarios.length;
+            // Itera sobre todos os usuários e busca seus respectivos endereços
+            let usuariosComEnderecos = await Promise.all(
+                listarUsuarios.map(async (usuario) => {
+                    let usuarioEndereco = await usuarioDAO.selectUserWithAddress(usuario.id);
+
+                    // Adiciona as informações do endereço dentro do objeto do usuário
+                    return {
+                        id: usuario.id,
+                        cpf: usuario.cpf,
+                        nome_completo: usuario.nome_completo,
+                        email: usuario.email,
+                        telefone: usuario.telefone,
+                        foto_perfil: usuario.foto_perfil,
+                        endereco: usuarioEndereco ? {
+                            id: usuarioEndereco.id_endereco,  // Ajuste conforme o seu modelo de dados
+                            cep: usuarioEndereco.cep,
+                            rua: usuarioEndereco.rua,
+                            numero: usuarioEndereco.numero,
+                            cidade: usuarioEndereco.cidade,
+                            bairro: usuarioEndereco.bairro,
+                            estado: usuarioEndereco.estado
+                        } : null
+                    };
+                })
+            );
+
+            usuariosJSON.usuarios = usuariosComEnderecos;
             usuariosJSON.status_code = 200;
             return usuariosJSON;
         } else {
@@ -28,17 +45,33 @@ const getListarUsuarios = async function() {
     }
 };
 
-// Função para buscar um usuário pelo id
+
 const getBuscarUsuario = async function(id) {
     try {
         if (id === '' || id === undefined || isNaN(id)) {
             return message.ERROR_INVALID_ID; // 400
         } else {
-            let dadosUsuario = await usuarioDAO.selectByIdUser(id);
+            let dadosUsuario = await usuarioDAO.selectUserWithAddress(id);
             let usuarioJSON = {};
 
             if (dadosUsuario) {
-                usuarioJSON.usuario = dadosUsuario;
+                usuarioJSON.usuario = {
+                    id: dadosUsuario.id,
+                    cpf: dadosUsuario.cpf,
+                    nome_completo: dadosUsuario.nome_completo,
+                    email: dadosUsuario.email,
+                    telefone: dadosUsuario.telefone,
+                    foto_perfil: dadosUsuario.foto_perfil,
+                    endereco: dadosUsuario ? {
+                        id: dadosUsuario.id_endereco,
+                        cep: dadosUsuario.cep,
+                        rua: dadosUsuario.rua,
+                        numero: dadosUsuario.numero,
+                        cidade: dadosUsuario.cidade,
+                        bairro: dadosUsuario.bairro,
+                        estado: dadosUsuario.estado
+                    } : null
+                };
                 usuarioJSON.status_code = 200;
                 return usuarioJSON; // 200
             } else {
@@ -51,7 +84,7 @@ const getBuscarUsuario = async function(id) {
     }
 };
 
-// Função para excluir um usuário pelo id
+
 const setExcluirUsuario = async function(id) {
     try {
         if (id === '' || id === undefined || isNaN(id)) {
@@ -77,8 +110,8 @@ const setExcluirUsuario = async function(id) {
     }
 };
 
-// Função para inserir um novo usuário
-const setInserirNovoUsuario = async function(dadosUsuario, contentType) {
+
+const setInserirNovoUsuario = async function(dadosUsuario, dadosEndereco, contentType) {
     try {
         if (String(contentType).toLowerCase() === 'application/json') {
             if (
@@ -91,11 +124,28 @@ const setInserirNovoUsuario = async function(dadosUsuario, contentType) {
             } else {
                 let novoUsuario = await usuarioDAO.insertUser(dadosUsuario);
                 if (novoUsuario) {
+                    let novoEndereco = await usuarioDAO.insertEndereco(novoUsuario.id, dadosEndereco);  // Supondo que você tenha um método para inserir o endereço
                     let resultadoUsuario = {
                         status: message.SUCCESS_CREATED_ITEM.status,
                         status_code: message.SUCCESS_CREATED_ITEM.status_code,
                         message: message.SUCCESS_CREATED_ITEM.message,
-                        usuario: dadosUsuario
+                        usuario: {
+                            id: novoUsuario.id,
+                            cpf: dadosUsuario.cpf,
+                            nome_completo: dadosUsuario.nome_completo,
+                            email: dadosUsuario.email,
+                            telefone: dadosUsuario.telefone,
+                            foto_perfil: dadosUsuario.foto_perfil,
+                            endereco: novoEndereco ? {
+                                id: novoEndereco.id,
+                                cep: novoEndereco.cep,
+                                rua: novoEndereco.rua,
+                                numero: novoEndereco.numero,
+                                cidade: novoEndereco.cidade,
+                                bairro: novoEndereco.bairro,
+                                estado: novoEndereco.estado
+                            } : null
+                        }
                     };
                     return resultadoUsuario; // 201
                 } else {
@@ -111,8 +161,8 @@ const setInserirNovoUsuario = async function(dadosUsuario, contentType) {
     }
 };
 
-// Função para atualizar um usuário pelo ID
-const setAtualizarUsuario = async function(id, novosDadosUsuario) {
+
+const setAtualizarUsuario = async function(id, novosDadosUsuario, novosDadosEndereco) {
     try {
         if (
             id === '' || id === undefined || isNaN(id) ||
@@ -123,13 +173,39 @@ const setAtualizarUsuario = async function(id, novosDadosUsuario) {
         ) {
             return message.ERROR_INVALID_INPUT; // 400
         } else {
-            let usuarioExistente = await usuarioDAO.selectByIdUser(id);
+            let usuarioExistente = await usuarioDAO.selectUserWithAddress(id);
 
             if (usuarioExistente) {
                 let resultadoAtualizacao = await usuarioDAO.updateUser(id, novosDadosUsuario);
 
+                // Se houver dados de endereço, atualize-os
+                if (novosDadosEndereco && usuarioExistente.endereco) {
+                    await usuarioDAO.updateEndereco(usuarioExistente.endereco.id, novosDadosEndereco);
+                }
+
                 if (resultadoAtualizacao) {
-                    return message.SUCCESS_UPDATED_ITEM; // 200
+                    return {
+                        status: message.SUCCESS_UPDATED_ITEM.status,
+                        status_code: message.SUCCESS_UPDATED_ITEM.status_code,
+                        message: message.SUCCESS_UPDATED_ITEM.message,
+                        usuario: {
+                            id: id,
+                            cpf: novosDadosUsuario.cpf,
+                            nome_completo: novosDadosUsuario.nome_completo,
+                            email: novosDadosUsuario.email,
+                            telefone: novosDadosUsuario.telefone,
+                            foto_perfil: novosDadosUsuario.foto_perfil,
+                            endereco: novosDadosEndereco ? {
+                                id: usuarioExistente.endereco.id,
+                                cep: novosDadosEndereco.cep,
+                                rua: novosDadosEndereco.rua,
+                                numero: novosDadosEndereco.numero,
+                                cidade: novosDadosEndereco.cidade,
+                                bairro: novosDadosEndereco.bairro,
+                                estado: novosDadosEndereco.estado
+                            } : usuarioExistente.endereco
+                        }
+                    };
                 } else {
                     return message.ERROR_INTERNAL_SERVER_DB; // 500
                 }
@@ -142,6 +218,7 @@ const setAtualizarUsuario = async function(id, novosDadosUsuario) {
         return message.ERROR_INTERNAL_SERVER; // 500
     }
 };
+
 
 // Exportando as funções para uso externo
 module.exports = {
