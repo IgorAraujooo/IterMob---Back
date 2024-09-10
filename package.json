@@ -1,7 +1,7 @@
 {
     "scripts": {
         "dev": "nodemon app.js",
-        "vercel-build": "npx prisma migrate deploy"
+        "vercel-build": "npx prisma db pull"
     },
     "dependencies": {
         "@prisma/client": "^5.19.1",
