@@ -1,9 +1,13 @@
 {
-  "dependencies": {
-    "@prisma/client": "^5.19.1",
-    "body-parser": "^1.20.2",
-    "cors": "^2.8.5",
-    "express": "^4.19.2",
-    "prisma": "^5.19.1"
-  }
+    "scripts": {
+        "dev": "nodemon app.js",
+        "vercel-build": "npx prisma migrate deploy"
+    },
+    "dependencies": {
+        "@prisma/client": "^5.19.1",
+        "body-parser": "^1.20.2",
+        "cors": "^2.8.5",
+        "express": "^4.19.2",
+        "prisma": "^5.19.1"
+    }
 }
