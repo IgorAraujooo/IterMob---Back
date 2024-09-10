@@ -1,18 +1,15 @@
 const { PrismaClient } = require('@prisma/client');
 
-// Instanciando o objeto prisma com as características do Prisma Client
 const prisma = new PrismaClient();
 
-// Função para listar todos os usuários existentes, incluindo seus endereços
 const selectAllUsers = async function() {
     try {
         let sql = `
             SELECT 
-                u.id, u.cpf, u.nome_completo, u.email, u.telefone, u.foto_perfil,
+                u.id, u.cpf, u.nome, u.sobrenome, u.email, u.telefone, u.foto_perfil,
                 e.id AS id_endereco, e.cep, e.rua, e.numero, e.cidade, e.bairro, e.estado
             FROM tbl_usuarios AS u
-            LEFT JOIN tbl_usuario_endereco AS ue ON u.id = ue.id_usuario
-            LEFT JOIN tbl_endereco AS e ON ue.id_endereco = e.id
+            LEFT JOIN tbl_endereco AS e ON u.id = e.id_usuario
             ORDER BY u.id DESC
         `;
         
@@ -24,16 +21,14 @@ const selectAllUsers = async function() {
     }
 };
 
-// Função para listar usuário específico pelo ID, incluindo seus endereços
 const selectUserWithAddress = async function(id) {
     try {
         let sql = `
             SELECT 
-                u.id, u.cpf, u.nome_completo, u.email, u.telefone, u.foto_perfil,
+                u.id, u.cpf, u.nome, u.sobrenome, u.email, u.telefone, u.foto_perfil,
                 e.id AS id_endereco, e.cep, e.rua, e.numero, e.cidade, e.bairro, e.estado
             FROM tbl_usuarios AS u
-            LEFT JOIN tbl_usuario_endereco AS ue ON u.id = ue.id_usuario
-            LEFT JOIN tbl_endereco AS e ON ue.id_endereco = e.id
+            LEFT JOIN tbl_endereco AS e ON u.id = e.id_usuario
             WHERE u.id = ${id}
         `;
         let rsUsuarioEndereco = await prisma.$queryRawUnsafe(sql);
@@ -44,39 +39,39 @@ const selectUserWithAddress = async function(id) {
     }
 };
 
-// Função para inserir um novo usuário, podendo também inserir um endereço associado
 const insertUser = async function(dadosUsuario, dadosEndereco) {
     try {
         let sqlUsuario = `
-            INSERT INTO tbl_usuarios (cpf, nome_completo, email, telefone, foto_perfil) 
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO tbl_usuarios (cpf, nome, sobrenome, email, telefone, foto_perfil) 
+            VALUES (?, ?, ?, ?, ?, ?)
         `;
         
-        // Insere o usuário
-        let resultUsuario = await prisma.$executeRawUnsafe(sqlUsuario, dadosUsuario.cpf, dadosUsuario.nome_completo, dadosUsuario.email, dadosUsuario.telefone, dadosUsuario.foto_perfil);
+        let resultUsuario = await prisma.$executeRawUnsafe(sqlUsuario, dadosUsuario.cpf, dadosUsuario.nome, dadosUsuario.sobrenome, dadosUsuario.email, dadosUsuario.telefone, dadosUsuario.foto_perfil);
 
-        // Se o usuário foi inserido com sucesso, pegamos o ID e associamos o endereço
         if (resultUsuario) {
             let idUsuario = await prisma.$queryRawUnsafe('SELECT LAST_INSERT_ID() AS id');
             
             if (dadosEndereco) {
                 let sqlEndereco = `
-                    INSERT INTO tbl_endereco (cep, rua, numero, cidade, bairro, estado) 
-                    VALUES (?, ?, ?, ?, ?, ?)
+                    INSERT INTO tbl_endereco (cep, rua, numero, cidade, bairro, estado, id_usuario) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
                 `;
-                let resultEndereco = await prisma.$executeRawUnsafe(sqlEndereco, dadosEndereco.cep, dadosEndereco.rua, dadosEndereco.numero, dadosEndereco.cidade, dadosEndereco.bairro, dadosEndereco.estado);
+                let resultEndereco = await prisma.$executeRawUnsafe(sqlEndereco, dadosEndereco.cep, dadosEndereco.rua, dadosEndereco.numero, dadosEndereco.cidade, dadosEndereco.bairro, dadosEndereco.estado, idUsuario[0].id);
                 
-                if (resultEndereco) {
-                    let idEndereco = await prisma.$queryRawUnsafe('SELECT LAST_INSERT_ID() AS id');
-                    let sqlAssoc = `
-                        INSERT INTO tbl_usuario_endereco (id_usuario, id_endereco) 
-                        VALUES (?, ?)
-                    `;
-                    await prisma.$executeRawUnsafe(sqlAssoc, idUsuario[0].id, idEndereco[0].id);
-                }
+                return resultEndereco ? {
+                    id: idUsuario[0].id,
+                    cep: dadosEndereco.cep,
+                    rua: dadosEndereco.rua,
+                    numero: dadosEndereco.numero,
+                    cidade: dadosEndereco.cidade,
+                    bairro: dadosEndereco.bairro,
+                    estado: dadosEndereco.estado
+                } : false;
             }
 
-            return idUsuario[0];
+            return {
+                id: idUsuario[0].id
+            };
         } else {
             return false;
         }
@@ -86,28 +81,16 @@ const insertUser = async function(dadosUsuario, dadosEndereco) {
     }
 };
 
-// Função para atualizar um usuário pelo ID, incluindo seus endereços
-const updateUser = async function(id, novosDadosUsuario, novosDadosEndereco) {
+const updateUser = async function(id, novosDadosUsuario) {
     try {
         let sqlUsuario = `
             UPDATE tbl_usuarios
-            SET cpf = ?, nome_completo = ?, email = ?, telefone = ?, foto_perfil = ?
+            SET cpf = ?, nome = ?, sobrenome = ?, email = ?, telefone = ?, foto_perfil = ?
             WHERE id = ?
         `;
 
-        let resultUsuario = await prisma.$executeRawUnsafe(sqlUsuario, novosDadosUsuario.cpf, novosDadosUsuario.nome_completo, novosDadosUsuario.email, novosDadosUsuario.telefone, novosDadosUsuario.foto_perfil, id);
+        let resultUsuario = await prisma.$executeRawUnsafe(sqlUsuario, novosDadosUsuario.cpf, novosDadosUsuario.nome, novosDadosUsuario.sobrenome, novosDadosUsuario.email, novosDadosUsuario.telefone, novosDadosUsuario.foto_perfil, id);
 
-        // Se o usuário foi atualizado, atualizamos também o endereço, se fornecido
-        if (resultUsuario && novosDadosEndereco) {
-            let sqlEndereco = `
-                UPDATE tbl_endereco
-                SET cep = ?, rua = ?, numero = ?, cidade = ?, bairro = ?, estado = ?
-                WHERE id = (SELECT id_endereco FROM tbl_usuario_endereco WHERE id_usuario = ?)
-            `;
-            let resultEndereco = await prisma.$executeRawUnsafe(sqlEndereco, novosDadosEndereco.cep, novosDadosEndereco.rua, novosDadosEndereco.numero, novosDadosEndereco.cidade, novosDadosEndereco.bairro, novosDadosEndereco.estado, id);
-
-            return resultEndereco ? true : false;
-        }
         return resultUsuario ? true : false;
     } catch (error) {
         console.error(error);
@@ -115,18 +98,30 @@ const updateUser = async function(id, novosDadosUsuario, novosDadosEndereco) {
     }
 };
 
-// Função para deletar um usuário e seu endereço associado
+const updateEndereco = async function(idEndereco, novosDadosEndereco) {
+    try {
+        let sqlEndereco = `
+            UPDATE tbl_endereco
+            SET cep = ?, rua = ?, numero = ?, cidade = ?, bairro = ?, estado = ?
+            WHERE id = ?
+        `;
+        let resultEndereco = await prisma.$executeRawUnsafe(sqlEndereco, novosDadosEndereco.cep, novosDadosEndereco.rua, novosDadosEndereco.numero, novosDadosEndereco.cidade, novosDadosEndereco.bairro, novosDadosEndereco.estado, idEndereco);
+
+        return resultEndereco ? true : false;
+    } catch (error) {
+        console.error(error);
+        return false;
+    }
+};
+
 const deleteUser = async function(id) {
     try {
-        // Deleta o endereço associado primeiro
         let sqlEndereco = `
-            DELETE e FROM tbl_endereco AS e
-            JOIN tbl_usuario_endereco AS ue ON e.id = ue.id_endereco
-            WHERE ue.id_usuario = ?
+            DELETE FROM tbl_endereco
+            WHERE id_usuario = ?
         `;
         let resultEndereco = await prisma.$executeRawUnsafe(sqlEndereco, id);
 
-        // Depois de deletar o endereço, deletamos o usuário
         let sqlUsuario = `DELETE FROM tbl_usuarios WHERE id = ${id}`;
         let resultUsuario = await prisma.$executeRawUnsafe(sqlUsuario);
 
@@ -137,11 +132,11 @@ const deleteUser = async function(id) {
     }
 };
 
-// Exportando as funções para uso externo
 module.exports = {
     selectAllUsers,
     selectUserWithAddress,
     insertUser,
     updateUser,
+    updateEndereco,
     deleteUser
 };

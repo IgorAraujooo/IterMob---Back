@@ -1,10 +1,3 @@
-/********************************************************
- * Objetivo: Controlador para realizar o CRUD de endereços
- * Data: 03/09/2024
- * Autor: Igor Araujo
- * Versão: 1.0
- ********************************************************/
-
 const message = require('../modulo/config.js');
 const enderecoDAO = require('../model/DAO/endereco.js');
 
@@ -77,8 +70,8 @@ const setExcluirEndereco = async function(id) {
     }
 };
 
-// Função para inserir um novo endereço
-const setInserirNovoEndereco = async function(dadosEndereco, contentType) {
+
+const setInserirNovoEndereco = async function(dadosEndereco, idUsuario, contentType) {
     try {
         if (String(contentType).toLowerCase() === 'application/json') {
             if (
@@ -87,17 +80,21 @@ const setInserirNovoEndereco = async function(dadosEndereco, contentType) {
                 dadosEndereco.numero === undefined || dadosEndereco.numero.length > 10 ||
                 dadosEndereco.cidade === '' || dadosEndereco.cidade === undefined || dadosEndereco.cidade.length > 100 ||
                 dadosEndereco.bairro === '' || dadosEndereco.bairro === undefined || dadosEndereco.bairro.length > 100 ||
-                dadosEndereco.estado === '' || dadosEndereco.estado === undefined || dadosEndereco.estado.length > 100
+                dadosEndereco.estado === '' || dadosEndereco.estado === undefined || dadosEndereco.estado.length > 100 ||
+                idUsuario === '' || idUsuario === undefined || isNaN(idUsuario)
             ) {
                 return message.ERROR_REQUIRED_FIELDS; // 400
             } else {
-                let novoEndereco = await enderecoDAO.insertEndereco(dadosEndereco);
-                if (novoEndereco) {
+                let idEndereco = await enderecoDAO.insertEndereco(dadosEndereco, idUsuario);
+                if (idEndereco) {
                     let resultadoEndereco = {
                         status: message.SUCCESS_CREATED_ITEM.status,
                         status_code: message.SUCCESS_CREATED_ITEM.status_code,
                         message: message.SUCCESS_CREATED_ITEM.message,
-                        endereco: dadosEndereco
+                        endereco: {
+                            id: idEndereco,
+                            ...dadosEndereco
+                        }
                     };
                     return resultadoEndereco; // 201
                 } else {
@@ -113,7 +110,7 @@ const setInserirNovoEndereco = async function(dadosEndereco, contentType) {
     }
 };
 
-// Função para atualizar um endereço pelo ID
+
 const setAtualizarEndereco = async function(id, novosDadosEndereco) {
     try {
         if (
@@ -133,7 +130,15 @@ const setAtualizarEndereco = async function(id, novosDadosEndereco) {
                 let resultadoAtualizacao = await enderecoDAO.updateEndereco(id, novosDadosEndereco);
 
                 if (resultadoAtualizacao) {
-                    return message.SUCCESS_UPDATED_ITEM; // 200
+                    return {
+                        status: message.SUCCESS_UPDATED_ITEM.status,
+                        status_code: message.SUCCESS_UPDATED_ITEM.status_code,
+                        message: message.SUCCESS_UPDATED_ITEM.message,
+                        endereco: {
+                            id: id,
+                            ...novosDadosEndereco
+                        }
+                    };
                 } else {
                     return message.ERROR_INTERNAL_SERVER_DB; // 500
                 }
@@ -147,7 +152,6 @@ const setAtualizarEndereco = async function(id, novosDadosEndereco) {
     }
 };
 
-// Exportando as funções para uso externo
 module.exports = {
     getListarEnderecos,
     getBuscarEndereco,
@@ -155,4 +159,3 @@ module.exports = {
     setInserirNovoEndereco,
     setAtualizarEndereco
 };
-
