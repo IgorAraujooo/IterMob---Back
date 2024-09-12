@@ -7,6 +7,8 @@ const app = express();
 
 const bodyParserJSON = bodyParser.json();
 
+const message = require('./modulo/config.js');
+
 ////////////////////////////////////////////////////////////////////// Import das Controllers ///////////////////////////////////////////////////////////////////////////////////////////
 
 const controllerUsuario = require('./controller/controller_usuarios')
@@ -47,16 +49,26 @@ app.get('/v1/itermob/usuario/:id/endereco', cors(), async function(request, resp
 });
 
 app.post('/v1/itermob/inserirUsuario', async function(request, response, next) {
-    let contentType = request.headers['content-type'] ? request.headers['content-type'].toLowerCase().trim() : '';
-    let dadosBody = request.body;
+    try {
+        let contentType = request.headers['content-type'] ? request.headers['content-type'].toLowerCase().trim() : '';
+        let dadosBody = request.body;
 
-    // Extrai os dados do endereço de dentro de dadosBody, se existir
-    let dadosEndereco = dadosBody.endereco || null;
+        // Extrai os dados do endereço de dentro de dadosBody, se existir
+        let dadosEndereco = dadosBody.dadosEndereco || null;
 
-    // Encaminha os dados da requisição para a controller enviar para o banco de dados
-    let resultDados = await controllerUsuario.setInserirNovoUsuario(dadosBody, dadosEndereco, contentType);
+        // Verifica se dadosBody contém todos os campos obrigatórios
+        if (!dadosBody.cpf || !dadosBody.nome || !dadosBody.sobrenome || !dadosBody.email || !dadosBody.telefone) {
+            return response.status(400).json(message.ERROR_REQUIRED_FIELDS);
+        }
 
-    response.status(resultDados.status_code).json(resultDados);
+        // Encaminha os dados da requisição para a controller enviar para o banco de dados
+        let resultDados = await controllerUsuario.setInserirNovoUsuario(dadosBody, dadosEndereco, contentType);
+
+        response.status(resultDados.status_code).json(resultDados);
+    } catch (error) {
+        console.error('Erro ao inserir usuário:', error);
+        response.status(500).json(message.ERROR_INTERNAL_SERVER);
+    }
 });
 
 

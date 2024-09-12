@@ -73,42 +73,45 @@ const setExcluirEndereco = async function(id) {
 
 const setInserirNovoEndereco = async function(dadosEndereco, idUsuario, contentType) {
     try {
-        if (String(contentType).toLowerCase() === 'application/json') {
-            if (
-                dadosEndereco.cep === '' || dadosEndereco.cep === undefined || dadosEndereco.cep.length > 10 ||
-                dadosEndereco.rua === '' || dadosEndereco.rua === undefined || dadosEndereco.rua.length > 100 ||
-                dadosEndereco.numero === undefined || dadosEndereco.numero.length > 10 ||
-                dadosEndereco.cidade === '' || dadosEndereco.cidade === undefined || dadosEndereco.cidade.length > 100 ||
-                dadosEndereco.bairro === '' || dadosEndereco.bairro === undefined || dadosEndereco.bairro.length > 100 ||
-                dadosEndereco.estado === '' || dadosEndereco.estado === undefined || dadosEndereco.estado.length > 100 ||
-                idUsuario === '' || idUsuario === undefined || isNaN(idUsuario)
-            ) {
-                return message.ERROR_REQUIRED_FIELDS; // 400
-            } else {
-                let idEndereco = await enderecoDAO.insertEndereco(dadosEndereco, idUsuario);
-                if (idEndereco) {
-                    let resultadoEndereco = {
-                        status: message.SUCCESS_CREATED_ITEM.status,
-                        status_code: message.SUCCESS_CREATED_ITEM.status_code,
-                        message: message.SUCCESS_CREATED_ITEM.message,
-                        endereco: {
-                            id: idEndereco,
-                            ...dadosEndereco
-                        }
-                    };
-                    return resultadoEndereco; // 201
-                } else {
-                    return message.ERROR_INTERNAL_SERVER_DB; // 500
-                }
-            }
-        } else {
+        // Verifica se contentType é válido
+        if (!contentType || contentType.toLowerCase() !== 'application/json') {
             return message.ERROR_CONTENT_TYPE; // 415
+        }
+
+        // Valida os dados do endereço
+        if (
+            !dadosEndereco.cep || dadosEndereco.cep.length > 10 ||
+            !dadosEndereco.rua || dadosEndereco.rua.length > 100 ||
+            !dadosEndereco.numero || dadosEndereco.numero.length > 10 ||
+            !dadosEndereco.cidade || dadosEndereco.cidade.length > 100 ||
+            !dadosEndereco.bairro || dadosEndereco.bairro.length > 100 ||
+            !dadosEndereco.estado || dadosEndereco.estado.length > 100 ||
+            !idUsuario || isNaN(idUsuario)
+        ) {
+            return message.ERROR_REQUIRED_FIELDS; // 400
+        }
+
+        // Insere o novo endereço
+        let idEndereco = await enderecoDAO.insertEndereco(dadosEndereco, idUsuario);
+        if (idEndereco) {
+            return {
+                status: message.SUCCESS_CREATED_ITEM.status,
+                status_code: message.SUCCESS_CREATED_ITEM.status_code,
+                message: message.SUCCESS_CREATED_ITEM.message,
+                endereco: {
+                    id: idEndereco,
+                    ...dadosEndereco
+                }
+            }; // 201
+        } else {
+            return message.ERROR_INTERNAL_SERVER_DB; // 500
         }
     } catch (error) {
         console.log(error);
         return message.ERROR_INTERNAL_SERVER; // 500
     }
 };
+
 
 
 const setAtualizarEndereco = async function(id, novosDadosEndereco) {

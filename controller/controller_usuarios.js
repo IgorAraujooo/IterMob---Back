@@ -111,7 +111,6 @@ const setExcluirUsuario = async function(id) {
     }
 };
 
-// Inserir um novo usuário
 const setInserirNovoUsuario = async function(dadosUsuario, dadosEndereco, contentType) {
     try {
         if (String(contentType).toLowerCase() !== 'application/json') {
@@ -186,7 +185,7 @@ const setAtualizarUsuario = async function(id, novosDadosUsuario, novosDadosEnde
                     await usuarioDAO.updateEndereco(usuarioExistente.endereco.id, novosDadosEndereco);
                 } else {
                     // Se o usuário não tiver um endereço, você pode optar por criar um novo
-                    await usuarioDAO.insertEndereco(id, novosDadosEndereco);
+                    await usuarioDAO.insertUser(id, novosDadosEndereco);
                 }
             }
 
