@@ -46,19 +46,19 @@ app.get('/v1/itermob/usuario/:id/endereco', cors(), async function(request, resp
     response.status(dadosUsuarioEndereco.status_code).json(dadosUsuarioEndereco);
 });
 
-// Rota para inserir um novo usuário
-app.post('/v1/itermob/inserirUsuario', cors(), bodyParserJSON, async function(request, response, next) {
-    // Recebe o content-type da requisição (API deve receber application/json)
-    let contentType = request.headers['content-type'];
-
-    // Recebe os dados encaminhados na requisição do body (JSON)
+app.post('/v1/itermob/inserirUsuario', async function(request, response, next) {
+    let contentType = request.headers['content-type'] ? request.headers['content-type'].toLowerCase().trim() : '';
     let dadosBody = request.body;
-   
+
+    // Extrai os dados do endereço de dentro de dadosBody, se existir
+    let dadosEndereco = dadosBody.endereco || null;
+
     // Encaminha os dados da requisição para a controller enviar para o banco de dados
-    let resultDados = await controllerUsuario.setInserirNovoUsuario(dadosBody, contentType);
+    let resultDados = await controllerUsuario.setInserirNovoUsuario(dadosBody, dadosEndereco, contentType);
 
     response.status(resultDados.status_code).json(resultDados);
 });
+
 
 // Rota para excluir um usuário pelo ID
 app.delete('/v1/itermob/usuario/:id', cors(), async function(request, response, next) {

@@ -1,6 +1,7 @@
 const message = require('../modulo/config.js');
 const usuarioDAO = require('../model/DAO/usuarios.js');
 
+// Listar todos os usuários com endereços
 const getListarUsuarios = async function() {
     try {
         let listarUsuarios = await usuarioDAO.selectAllUsers();
@@ -44,6 +45,7 @@ const getListarUsuarios = async function() {
     }
 };
 
+// Buscar um usuário específico com endereço
 const getBuscarUsuario = async function(id) {
     try {
         if (!id || isNaN(id)) {
@@ -83,13 +85,14 @@ const getBuscarUsuario = async function(id) {
     }
 };
 
+// Excluir um usuário
 const setExcluirUsuario = async function(id) {
     try {
         if (!id || isNaN(id)) {
             return message.ERROR_INVALID_ID; // 400
         }
 
-        let usuarioExistente = await usuarioDAO.selectByIdUser(id);
+        let usuarioExistente = await usuarioDAO.selectUserWithAddress(id);
 
         if (usuarioExistente) {
             let resultadoExclusao = await usuarioDAO.deleteUser(id);
@@ -108,6 +111,7 @@ const setExcluirUsuario = async function(id) {
     }
 };
 
+// Inserir um novo usuário
 const setInserirNovoUsuario = async function(dadosUsuario, dadosEndereco, contentType) {
     try {
         if (String(contentType).toLowerCase() !== 'application/json') {
@@ -139,7 +143,7 @@ const setInserirNovoUsuario = async function(dadosUsuario, dadosEndereco, conten
                     telefone: dadosUsuario.telefone,
                     foto_perfil: dadosUsuario.foto_perfil,
                     endereco: dadosEndereco ? {
-                        id: dadosEndereco.id,
+                        id: novoUsuario.id_endereco,
                         cep: dadosEndereco.cep,
                         rua: dadosEndereco.rua,
                         numero: dadosEndereco.numero,
@@ -177,8 +181,13 @@ const setAtualizarUsuario = async function(id, novosDadosUsuario, novosDadosEnde
         if (usuarioExistente) {
             let resultadoAtualizacao = await usuarioDAO.updateUser(id, novosDadosUsuario);
 
-            if (novosDadosEndereco && usuarioExistente.endereco) {
-                await usuarioDAO.updateEndereco(usuarioExistente.endereco.id, novosDadosEndereco);
+            if (novosDadosEndereco) {
+                if (usuarioExistente.endereco) {
+                    await usuarioDAO.updateEndereco(usuarioExistente.endereco.id, novosDadosEndereco);
+                } else {
+                    // Se o usuário não tiver um endereço, você pode optar por criar um novo
+                    await usuarioDAO.insertEndereco(id, novosDadosEndereco);
+                }
             }
 
             if (resultadoAtualizacao) {
@@ -195,7 +204,7 @@ const setAtualizarUsuario = async function(id, novosDadosUsuario, novosDadosEnde
                         telefone: novosDadosUsuario.telefone,
                         foto_perfil: novosDadosUsuario.foto_perfil,
                         endereco: novosDadosEndereco ? {
-                            id: usuarioExistente.endereco.id,
+                            id: usuarioExistente.endereco ? usuarioExistente.endereco.id : undefined,
                             cep: novosDadosEndereco.cep,
                             rua: novosDadosEndereco.rua,
                             numero: novosDadosEndereco.numero,
@@ -217,10 +226,11 @@ const setAtualizarUsuario = async function(id, novosDadosUsuario, novosDadosEnde
     }
 };
 
+// Exporta os métodos
 module.exports = {
     getListarUsuarios,
     getBuscarUsuario,
-    setExcluirUsuario,
     setInserirNovoUsuario,
-    setAtualizarUsuario
+    setAtualizarUsuario,
+    setExcluirUsuario
 };
