@@ -1,7 +1,7 @@
 const { PrismaClient } = require('@prisma/client');
-
 const prisma = new PrismaClient();
 
+// Função para selecionar todos os usuários com seus endereços
 const selectAllUsers = async function() {
     try {
         let sql = `
@@ -12,7 +12,7 @@ const selectAllUsers = async function() {
             LEFT JOIN tbl_endereco AS e ON u.id = e.id_usuario
             ORDER BY u.id DESC
         `;
-        
+
         let rsUsuarios = await prisma.$queryRawUnsafe(sql);
         return rsUsuarios.length > 0 ? rsUsuarios : false;
     } catch (error) {
@@ -21,7 +21,8 @@ const selectAllUsers = async function() {
     }
 };
 
-const selectUserWithAddress = async function(id) {
+// Função para selecionar um usuário pelo ID
+const selectByIdUser = async function(id) {
     try {
         let sql = `
             SELECT 
@@ -31,47 +32,38 @@ const selectUserWithAddress = async function(id) {
             LEFT JOIN tbl_endereco AS e ON u.id = e.id_usuario
             WHERE u.id = ${id}
         `;
-        let rsUsuarioEndereco = await prisma.$queryRawUnsafe(sql);
-        return rsUsuarioEndereco.length > 0 ? rsUsuarioEndereco[0] : false;
+        let rsUsuario = await prisma.$queryRawUnsafe(sql);
+        return rsUsuario.length > 0 ? rsUsuario[0] : false;
     } catch (error) {
         console.error(error);
         return false;
     }
 };
 
+// Função para inserir um novo usuário e seu endereço
 const insertUser = async function(dadosUsuario, dadosEndereco) {
     try {
         let sqlUsuario = `
             INSERT INTO tbl_usuarios (cpf, nome, sobrenome, email, telefone, foto_perfil) 
             VALUES (?, ?, ?, ?, ?, ?)
         `;
-        
+
         let resultUsuario = await prisma.$executeRawUnsafe(sqlUsuario, dadosUsuario.cpf, dadosUsuario.nome, dadosUsuario.sobrenome, dadosUsuario.email, dadosUsuario.telefone, dadosUsuario.foto_perfil);
 
         if (resultUsuario) {
             let idUsuario = await prisma.$queryRawUnsafe('SELECT LAST_INSERT_ID() AS id');
-            
+
             if (dadosEndereco) {
                 let sqlEndereco = `
                     INSERT INTO tbl_endereco (cep, rua, numero, cidade, bairro, estado, id_usuario) 
                     VALUES (?, ?, ?, ?, ?, ?, ?)
                 `;
                 let resultEndereco = await prisma.$executeRawUnsafe(sqlEndereco, dadosEndereco.cep, dadosEndereco.rua, dadosEndereco.numero, dadosEndereco.cidade, dadosEndereco.bairro, dadosEndereco.estado, idUsuario[0].id);
-                
-                return resultEndereco ? {
-                    id: idUsuario[0].id,
-                    cep: dadosEndereco.cep,
-                    rua: dadosEndereco.rua,
-                    numero: dadosEndereco.numero,
-                    cidade: dadosEndereco.cidade,
-                    bairro: dadosEndereco.bairro,
-                    estado: dadosEndereco.estado
-                } : false;
+
+                return resultEndereco ? { id: idUsuario[0].id } : false;
             }
 
-            return {
-                id: idUsuario[0].id
-            };
+            return { id: idUsuario[0].id };
         } else {
             return false;
         }
@@ -81,6 +73,7 @@ const insertUser = async function(dadosUsuario, dadosEndereco) {
     }
 };
 
+// Função para atualizar os dados do usuário
 const updateUser = async function(id, novosDadosUsuario) {
     try {
         let sqlUsuario = `
@@ -98,6 +91,7 @@ const updateUser = async function(id, novosDadosUsuario) {
     }
 };
 
+// Função para atualizar o endereço
 const updateEndereco = async function(idEndereco, novosDadosEndereco) {
     try {
         let sqlEndereco = `
@@ -114,13 +108,30 @@ const updateEndereco = async function(idEndereco, novosDadosEndereco) {
     }
 };
 
+// Função para inserir um novo endereço para um usuário existente
+const insertUserAddress = async function(idUsuario, dadosEndereco) {
+    try {
+        let sqlEndereco = `
+            INSERT INTO tbl_endereco (cep, rua, numero, cidade, bairro, estado, id_usuario) 
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        `;
+        let resultEndereco = await prisma.$executeRawUnsafe(sqlEndereco, dadosEndereco.cep, dadosEndereco.rua, dadosEndereco.numero, dadosEndereco.cidade, dadosEndereco.bairro, dadosEndereco.estado, idUsuario);
+
+        return resultEndereco ? true : false;
+    } catch (error) {
+        console.error(error);
+        return false;
+    }
+};
+
+// Função para excluir um usuário e seus endereços
 const deleteUser = async function(id) {
     try {
         let sqlEndereco = `
             DELETE FROM tbl_endereco
             WHERE id_usuario = ?
         `;
-        let resultEndereco = await prisma.$executeRawUnsafe(sqlEndereco, id);
+        await prisma.$executeRawUnsafe(sqlEndereco, id);
 
         let sqlUsuario = `DELETE FROM tbl_usuarios WHERE id = ${id}`;
         let resultUsuario = await prisma.$executeRawUnsafe(sqlUsuario);
@@ -134,9 +145,10 @@ const deleteUser = async function(id) {
 
 module.exports = {
     selectAllUsers,
-    selectUserWithAddress,
+    selectByIdUser,
     insertUser,
     updateUser,
     updateEndereco,
+    insertUserAddress,
     deleteUser
 };

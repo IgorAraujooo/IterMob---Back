@@ -70,22 +70,24 @@ const setExcluirEndereco = async function(id) {
     }
 };
 
-
-const setInserirNovoEndereco = async function(dadosEndereco, idUsuario, contentType) {
+const setInserirNovoEndereco = async function(dadosEndereco, contentType) {
     try {
         if (String(contentType).toLowerCase() === 'application/json') {
+            id_usuario = Number(dadosEndereco.id_usuario)
             if (
-                dadosEndereco.cep === '' || dadosEndereco.cep === undefined || dadosEndereco.cep.length > 10 ||
-                dadosEndereco.rua === '' || dadosEndereco.rua === undefined || dadosEndereco.rua.length > 100 ||
-                dadosEndereco.numero === undefined || dadosEndereco.numero.length > 10 ||
-                dadosEndereco.cidade === '' || dadosEndereco.cidade === undefined || dadosEndereco.cidade.length > 100 ||
-                dadosEndereco.bairro === '' || dadosEndereco.bairro === undefined || dadosEndereco.bairro.length > 100 ||
-                dadosEndereco.estado === '' || dadosEndereco.estado === undefined || dadosEndereco.estado.length > 100 ||
-                idUsuario === '' || idUsuario === undefined || isNaN(idUsuario)
+                dadosEndereco.cep == null || dadosEndereco.cep.length > 10 ||
+                dadosEndereco.rua == null || dadosEndereco.rua.length > 100 ||
+                dadosEndereco.numero == null || dadosEndereco.numero.length > 10 ||
+                dadosEndereco.cidade == null || dadosEndereco.cidade.length > 100 ||
+                dadosEndereco.bairro == null || dadosEndereco.bairro.length > 100 ||
+                dadosEndereco.estado == null || dadosEndereco.estado.length > 100 ||
+                id_usuario == null
             ) {
+
                 return message.ERROR_REQUIRED_FIELDS; // 400
             } else {
-                let idEndereco = await enderecoDAO.insertEndereco(dadosEndereco, idUsuario);
+
+                let idEndereco = await enderecoDAO.insertEndereco(dadosEndereco, id_usuario);
                 if (idEndereco) {
                     let resultadoEndereco = {
                         status: message.SUCCESS_CREATED_ITEM.status,
@@ -111,6 +113,8 @@ const setInserirNovoEndereco = async function(dadosEndereco, idUsuario, contentT
 };
 
 
+
+// Função para atualizar um endereço
 const setAtualizarEndereco = async function(id, novosDadosEndereco) {
     try {
         if (
@@ -158,4 +162,4 @@ module.exports = {
     setExcluirEndereco,
     setInserirNovoEndereco,
     setAtualizarEndereco
-};
+}
