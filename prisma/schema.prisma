@@ -3,57 +3,31 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-model tbl_cartoes {
-  id_cartao        Int       @id
-  nome_titular     String    @db.VarChar(255)
-  numero           String    @db.VarChar(20)
-  tipo_cartao      String?   @db.VarChar(50)
-  data_validade    DateTime? @db.Date
-  codigo_seguranca String?   @db.VarChar(5)
-}
-
 model tbl_endereco {
-  id_endereco          Int                    @id
-  cep                  String                 @db.VarChar(10)
-  rua                  String                 @db.VarChar(100)
-  numero               String?                @db.VarChar(10)
-  cidade               String                 @db.VarChar(100)
-  estado               String                 @db.VarChar(100)
-  tbl_usuario_endereco tbl_usuario_endereco[]
-}
+  id           Int           @id @default(autoincrement())
+  id_usuario   Int?
+  cep          String        @db.VarChar(10)
+  rua          String        @db.VarChar(100)
+  numero       String?       @db.VarChar(10)
+  cidade       String        @db.VarChar(100)
+  bairro       String?       @db.VarChar(100)
+  estado       String        @db.VarChar(100)
+  tbl_usuarios tbl_usuarios? @relation(fields: [id_usuario], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "tbl_endereco_ibfk_1")
 
-model tbl_fac {
-  id_fac           Int      @id
-  tipo_atendimento String?  @db.VarChar(100)
-  data             DateTime @db.Date
-  hora             DateTime @db.Time(0)
-  linha            String?  @db.VarChar(100)
-  sentido          String?  @db.VarChar(100)
-  prefixo          String?  @db.VarChar(100)
-  item             String?  @db.VarChar(100)
-  foto_item        String?  @db.VarChar(100)
-}
-
-model tbl_usuario_endereco {
-  id_usuario   Int
-  id_endereco  Int
-  tbl_usuarios tbl_usuarios @relation(fields: [id_usuario], references: [id_usuario], onDelete: NoAction, onUpdate: NoAction, map: "tbl_usuario_endereco_ibfk_1")
-  tbl_endereco tbl_endereco @relation(fields: [id_endereco], references: [id_endereco], onDelete: NoAction, onUpdate: NoAction, map: "tbl_usuario_endereco_ibfk_2")
-
-  @@id([id_usuario, id_endereco])
-  @@index([id_endereco], map: "id_endereco")
+  @@index([id_usuario], map: "id_usuario")
 }
 
 model tbl_usuarios {
-  id_usuario           Int                    @id
-  cpf                  String                 @db.VarChar(11)
-  nome_completo        String                 @db.VarChar(100)
-  email                String                 @db.VarChar(100)
-  telefone             String                 @db.VarChar(20)
-  foto_perfil          String?                @db.VarChar(200)
-  tbl_usuario_endereco tbl_usuario_endereco[]
+  id           Int            @id @default(autoincrement())
+  cpf          String         @db.VarChar(11)
+  nome         String         @db.VarChar(200)
+  sobrenome    String         @db.VarChar(200)
+  email        String         @db.VarChar(100)
+  telefone     String         @db.VarChar(20)
+  foto_perfil  String?        @db.VarChar(200)
+  tbl_endereco tbl_endereco[]
 }

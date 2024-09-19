@@ -1,3 +1,5 @@
+//yarn && npm install prisma--save && npx prisma db pull && npx prisma generate && npm install @prisma / client--save
+
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
@@ -31,20 +33,21 @@ app.get('/v1/itermob/usuarios', cors(), async function(request, response, next) 
 
 // Rota para buscar um usuário pelo ID (com dados de endereço)
 app.get('/v1/itermob/usuario/:id', cors(), async function(request, response, next) {
+
     let idUsuario = request.params.id;
-  
+
     let dadosUsuario = await controllerUsuario.getBuscarUsuario(idUsuario);
-  
+
     response.status(dadosUsuario.status_code).json(dadosUsuario);
 });
 
 app.get('/v1/itermob/usuario/:id/endereco', cors(), async function(request, response, next) {
     // Recebe o ID da requisição 
     let idUsuario = request.params.id;
-  
+
     // Solicita para o controller o usuário e o endereço filtrando pelo ID
     let dadosUsuarioEndereco = await controllerUsuario.getBuscarUsuarioComEndereco(idUsuario);
-  
+
     response.status(dadosUsuarioEndereco.status_code).json(dadosUsuarioEndereco);
 });
 
@@ -118,10 +121,10 @@ app.get('/v1/itermob/enderecos', cors(), async function(request, response, next)
 app.get('/v1/itermob/endereco/:id', cors(), async function(request, response, next) {
     // Recebe o ID da requisição 
     let idEndereco = request.params.id;
-  
+
     // Solicita para o controller o endereço filtrando pelo ID
     let dadosEndereco = await controllerEndereco.getBuscarEndereco(idEndereco);
-  
+
     response.status(dadosEndereco.status_code).json(dadosEndereco);
 });
 
@@ -132,12 +135,13 @@ app.post('/v1/itermob/inserirEndereco', cors(), bodyParserJSON, async function(r
 
     // Recebe os dados encaminhados na requisição do body (JSON)
     let dadosBody = request.body;
-   
+
     // Encaminha os dados da requisição para a controller enviar para o banco de dados
     let resultDados = await controllerEndereco.setInserirNovoEndereco(dadosBody, contentType);
 
     response.status(resultDados.status_code).json(resultDados);
 });
+
 
 // Rota para excluir um endereço pelo ID
 app.delete('/v1/itermob/endereco/:id', cors(), async function(request, response, next) {
