@@ -63,15 +63,15 @@ const insertUser = async function(dadosUsuario, dadosEndereco) {
 
             if (dadosEndereco) {
                 let sqlEndereco = `
-                    INSERT INTO tbl_endereco (cep, rua, numero, cidade, bairro, estado, id_usuario) 
+                    INSERT INTO tbl_endereco (cep, rua, numero, cidade, bairro, estado, idUsuario) 
                     VALUES (?, ?, ?, ?, ?, ?, ?)
                 `;
-                let resultEndereco = await prisma.$executeRawUnsafe(sqlEndereco, dadosEndereco.cep, dadosEndereco.rua, dadosEndereco.numero, dadosEndereco.cidade, dadosEndereco.bairro, dadosEndereco.estado, idUsuario[0].id);
+                let resultEndereco = await prisma.$executeRawUnsafe(sqlEndereco, dadosEndereco.cep, dadosEndereco.rua, dadosEndereco.numero, dadosEndereco.cidade, dadosEndereco.bairro, dadosEndereco.estado, idUsuario);
 
                 return resultEndereco ? { id: idUsuario[0].id } : false;
             }
 
-            return { id: idUsuario[0].id };
+            return { id: idUsuario };
         } else {
             return false;
         }
