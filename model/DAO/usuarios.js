@@ -45,14 +45,16 @@ const insertUser = async function(dadosUsuario, dadosEndereco) {
 
     console.log("cheguei no dao", dadosUsuario)
     try {
-        let sqlUsuario = `
-            INSERT INTO tbl_usuarios (cpf, nome, sobrenome, email, telefone, foto_perfil) 
-            VALUES (?, ?, ?, ?, ?, ?)
-        `;
+        // let sqlUsuario = `
+        //     INSERT INTO tbl_usuarios (cpf, nome, sobrenome, email, telefone, foto_perfil) 
+        //     VALUES (?, ?, ?, ?, ?, ?)
+        // `;
 
-        console.log("esse é o sql: ", sqlUsuario)
+        // console.log("esse é o sql: ", sqlUsuario)
 
-        let resultUsuario = await prisma.$executeRawUnsafe(sqlUsuario, dadosUsuario.cpf, dadosUsuario.nome, dadosUsuario.sobrenome, dadosUsuario.email, dadosUsuario.telefone, dadosUsuario.foto_perfil);
+        let resultUsuario = await prisma.$executeRaw`INSERT INTO tbl_usuarios (cpf, nome, sobrenome, email, telefone, foto_perfil) VALUES (${dadosUsuario.cpf}, ${dadosUsuario.nome}, ${dadosUsuario.sobrenome}, ${dadosUsuario.email}, ${dadosUsuario.telefone}, ${dadosUsuario.foto_perfil});`;
+
+
 
         console.log("o resultado foi esse: ", resultUsuario)
 
