@@ -42,13 +42,19 @@ const selectByIdUser = async function(id) {
 
 // Função para inserir um novo usuário e seu endereço
 const insertUser = async function(dadosUsuario, dadosEndereco) {
+
+    console.log("cheguei no dao", dadosUsuario)
     try {
         let sqlUsuario = `
             INSERT INTO tbl_usuarios (cpf, nome, sobrenome, email, telefone, foto_perfil) 
             VALUES (?, ?, ?, ?, ?, ?)
         `;
 
+        console.log("esse é o sql: ", sqlUsuario)
+
         let resultUsuario = await prisma.$executeRawUnsafe(sqlUsuario, dadosUsuario.cpf, dadosUsuario.nome, dadosUsuario.sobrenome, dadosUsuario.email, dadosUsuario.telefone, dadosUsuario.foto_perfil);
+
+        console.log("o resultado foi esse: ", resultUsuario)
 
         if (resultUsuario) {
             let idUsuario = await prisma.$queryRawUnsafe('SELECT LAST_INSERT_ID() AS id');

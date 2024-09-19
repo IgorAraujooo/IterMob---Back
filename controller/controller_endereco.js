@@ -72,7 +72,6 @@ const setExcluirEndereco = async function(id) {
 
 const setInserirNovoEndereco = async function(dadosEndereco, contentType) {
     try {
-
         if (String(contentType).toLowerCase() === 'application/json') {
             id_usuario = Number(dadosEndereco.id_usuario)
             if (
@@ -103,9 +102,9 @@ const setInserirNovoEndereco = async function(dadosEndereco, contentType) {
                 } else {
                     return message.ERROR_INTERNAL_SERVER_DB; // 500
                 }
-            }; // 201
+            }
         } else {
-            return message.ERROR_INTERNAL_SERVER_DB; // 500
+            return message.ERROR_CONTENT_TYPE; // 415
         }
     } catch (error) {
         console.log(error);
@@ -115,6 +114,7 @@ const setInserirNovoEndereco = async function(dadosEndereco, contentType) {
 
 
 
+// Função para atualizar um endereço
 const setAtualizarEndereco = async function(id, novosDadosEndereco) {
     try {
         if (
