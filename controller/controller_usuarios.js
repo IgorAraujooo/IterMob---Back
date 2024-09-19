@@ -135,7 +135,7 @@ const setInserirNovoUsuario = async function(dadosUsuario, contentType) {
                 status_code: message.SUCCESS_CREATED_ITEM.status_code,
                 message: message.SUCCESS_CREATED_ITEM.message,
 
-                usuario: usuarioComEndereco
+                usuario: usuarioComEndereco,
 
                 usuario: {
                     id: novoUsuario.id,
