@@ -59,7 +59,8 @@ const insertUser = async function(dadosUsuario, dadosEndereco) {
         console.log("o resultado foi esse: ", resultUsuario)
 
         if (resultUsuario) {
-            let idUsuario = await prisma.$queryRawUnsafe('SELECT LAST_INSERT_ID() AS id');
+
+            let idUsuario = resultUsuario[0].id
 
             if (dadosEndereco) {
                 let sqlEndereco = `
