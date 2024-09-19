@@ -1,3 +1,4 @@
+const bcrypt = require('bcrypt');
 const message = require('../modulo/config.js');
 const usuarioDAO = require('../model/DAO/usuarios.js');
 
@@ -124,7 +125,7 @@ const setInserirNovoUsuario = async function(dadosUsuario, contentType) {
             !dadosUsuario.sobrenome || dadosUsuario.sobrenome.length > 200 ||
             !dadosUsuario.email || dadosUsuario.email.length > 100 ||
             !dadosUsuario.telefone || dadosUsuario.telefone.length > 20
-        ) {
+        ) { 
             return message.ERROR_REQUIRED_FIELDS; // 400
         }
 
@@ -217,6 +218,46 @@ const setAtualizarUsuario = async function(id, novosDadosUsuario, novosDadosEnde
         return message.ERROR_INTERNAL_SERVER; // 500 Internal Server Error
     }
 };
+
+const loginUsuario = async function(email, senha) {
+    try {
+        
+        if (!email || !senha) {
+            return message.ERROR_REQUIRED_FIELDS; 
+        }
+
+     
+        let dadosUsuario = await usuarioDAO.selectUserByEmail(email);
+
+        if (dadosUsuario) {
+            
+            const senhaValida = await bcrypt.compare(senha, dadosUsuario.senha);
+
+            if (senhaValida) {
+               
+                let usuarioJSON = {
+                    usuario: {
+                        id: dadosUsuario.id,
+                        nome: dadosUsuario.nome,
+                        sobrenome: dadosUsuario.sobrenome,
+                        email: dadosUsuario.email
+                        
+                    },
+                    status_code: 200
+                };
+                return usuarioJSON; 
+            } else {
+                return message.ERROR_INVALID_CREDENTIALS; 
+            }
+        } else {
+            return message.ERROR_NOT_FOUND; 
+        }
+    } catch (error) {
+        console.error(error);
+        return message.ERROR_INTERNAL_SERVER_DB; 
+    }
+};
+
 module.exports = {
     getListarUsuarios,
     getBuscarUsuario,
