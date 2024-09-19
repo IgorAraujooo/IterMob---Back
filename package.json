@@ -1,6 +1,6 @@
 {
     "scripts": {
-        "build": "yarn && npm install prisma --save && npx prisma migrate dev --name itermob && npx prisma migrate deploy && npx prisma db pull && npx prisma generate && npm install @prisma/client --save",
+        "build": "yarn && npm install prisma --save && npx prisma db pull && npx prisma generate && npm install @prisma/client --save",
         "start": "node app.js",
         "dev": "nodemon app.js"
     },
