@@ -1,6 +1,7 @@
 const message = require('../modulo/config.js');
 const usuarioDAO = require('../model/DAO/usuarios.js');
 
+// Função para listar todos os usuários
 const getListarUsuarios = async function() {
     try {
         let listarUsuarios = await usuarioDAO.selectAllUsers();
@@ -45,6 +46,7 @@ const getListarUsuarios = async function() {
     }
 };
 
+// Função para buscar um usuário pelo ID
 const getBuscarUsuario = async function(id) {
     try {
         if (!id || isNaN(id)) {
@@ -92,7 +94,7 @@ const setExcluirUsuario = async function(id) {
             return message.ERROR_INVALID_ID; // 400
         }
 
-        let usuarioExistente = await usuarioDAO.selectUserWithAddress(id);
+        let usuarioExistente = await usuarioDAO.selectByIdUser(id);
 
         if (usuarioExistente) {
             let resultadoExclusao = await usuarioDAO.deleteUser(id);
@@ -134,28 +136,7 @@ const setInserirNovoUsuario = async function(dadosUsuario, contentType) {
                 status: message.SUCCESS_CREATED_ITEM.status,
                 status_code: message.SUCCESS_CREATED_ITEM.status_code,
                 message: message.SUCCESS_CREATED_ITEM.message,
-
-                usuario: usuarioComEndereco,
-
-                usuario: {
-                    id: novoUsuario.id,
-                    cpf: dadosUsuario.cpf,
-                    nome: dadosUsuario.nome,
-                    sobrenome: dadosUsuario.sobrenome,
-                    email: dadosUsuario.email,
-                    telefone: dadosUsuario.telefone,
-                    foto_perfil: dadosUsuario.foto_perfil,
-                    endereco: dadosEndereco ? {
-                        id: novoUsuario.id_endereco,
-                        cep: dadosEndereco.cep,
-                        rua: dadosEndereco.rua,
-                        numero: dadosEndereco.numero,
-                        cidade: dadosEndereco.cidade,
-                        bairro: dadosEndereco.bairro,
-                        estado: dadosEndereco.estado
-                    } : null
-                }
-
+                usuario: usuarioComEndereco
             };
             return resultadoUsuario; // 201
         } else {
@@ -187,14 +168,14 @@ const setAtualizarUsuario = async function(id, novosDadosUsuario, novosDadosEnde
             // Atualiza o usuário
             let resultadoAtualizacao = await usuarioDAO.updateUser(id, novosDadosUsuario);
 
-
+            // Atualiza o endereço se fornecido
             if (novosDadosEndereco) {
                 if (usuarioExistente.endereco) {
+                    // Atualiza endereço existente
                     await usuarioDAO.updateEndereco(usuarioExistente.endereco.id, novosDadosEndereco);
                 } else {
-                    // Se o usuário não tiver um endereço, você pode optar por criar um novo
-                    await usuarioDAO.insertUser(id, novosDadosEndereco);
-
+                    // Adiciona novo endereço se não houver
+                    await usuarioDAO.insertUserAddress(id, novosDadosEndereco);
                 }
             }
 
@@ -207,24 +188,22 @@ const setAtualizarUsuario = async function(id, novosDadosUsuario, novosDadosEnde
                     status_code: message.SUCCESS_UPDATED_ITEM.status_code,
                     message: message.SUCCESS_UPDATED_ITEM.message,
                     usuario: {
-
-                        id: id,
-                        cpf: novosDadosUsuario.cpf,
-                        nome: novosDadosUsuario.nome,
-                        sobrenome: novosDadosUsuario.sobrenome,
-                        email: novosDadosUsuario.email,
-                        telefone: novosDadosUsuario.telefone,
-                        foto_perfil: novosDadosUsuario.foto_perfil,
-                        endereco: novosDadosEndereco ? {
-                            id: usuarioExistente.endereco ? usuarioExistente.endereco.id : undefined,
-                            cep: novosDadosEndereco.cep,
-                            rua: novosDadosEndereco.rua,
-                            numero: novosDadosEndereco.numero,
-                            cidade: novosDadosEndereco.cidade,
-                            bairro: novosDadosEndereco.bairro,
-                            estado: novosDadosEndereco.estado
-                        } : usuarioExistente.endereco
-
+                        id: usuarioAtualizado.id,
+                        cpf: usuarioAtualizado.cpf,
+                        nome: usuarioAtualizado.nome,
+                        sobrenome: usuarioAtualizado.sobrenome,
+                        email: usuarioAtualizado.email,
+                        telefone: usuarioAtualizado.telefone,
+                        foto_perfil: usuarioAtualizado.foto_perfil,
+                        endereco: usuarioAtualizado.id_endereco ? {
+                            id: usuarioAtualizado.id_endereco,
+                            cep: usuarioAtualizado.cep,
+                            rua: usuarioAtualizado.rua,
+                            numero: usuarioAtualizado.numero,
+                            cidade: usuarioAtualizado.cidade,
+                            bairro: usuarioAtualizado.bairro,
+                            estado: usuarioAtualizado.estado
+                        } : null
                     }
                 };
             } else {
@@ -238,13 +217,10 @@ const setAtualizarUsuario = async function(id, novosDadosUsuario, novosDadosEnde
         return message.ERROR_INTERNAL_SERVER; // 500 Internal Server Error
     }
 };
-
 module.exports = {
     getListarUsuarios,
     getBuscarUsuario,
+    setExcluirUsuario,
     setInserirNovoUsuario,
-
-    setAtualizarUsuario,
-    setExcluirUsuario
+    setAtualizarUsuario
 };
-
