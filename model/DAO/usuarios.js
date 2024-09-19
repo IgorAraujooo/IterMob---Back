@@ -54,13 +54,11 @@ const insertUser = async function(dadosUsuario, dadosEndereco) {
 
         let resultUsuario = await prisma.$executeRaw`INSERT INTO tbl_usuarios (cpf, nome, sobrenome, email, telefone, foto_perfil) VALUES (${dadosUsuario.cpf}, ${dadosUsuario.nome}, ${dadosUsuario.sobrenome}, ${dadosUsuario.email}, ${dadosUsuario.telefone}, ${dadosUsuario.foto_perfil});`;
 
+        let idUsuario = resultUsuario[0].id
 
-
-        console.log("o resultado foi esse: ", resultUsuario)
+        console.log(idUsuario,"o resultado foi esse: ", resultUsuario)
 
         if (resultUsuario) {
-
-            let idUsuario = resultUsuario[0].id
 
             if (dadosEndereco) {
                 let sqlEndereco = `
