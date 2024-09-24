@@ -43,12 +43,13 @@ app.get('/v1/itermob/usuario/:id/endereco', async function (request, response) {
     response.status(dadosUsuarioEndereco.status_code).json(dadosUsuarioEndereco);
 });
 
-// Rota para inserir um novo usuário
 app.post('/v1/itermob/inserirUsuario', async function (request, response) {
     let dadosBody = request.body;
-    let resultDados = await controllerUsuario.setInserirNovoUsuario(dadosBody);
+    let contentType = request.is();
+    let resultDados = await controllerUsuario.setInserirNovoUsuario(dadosBody, contentType);
     response.status(resultDados.status_code).json(resultDados);
 });
+
 
 // Rota para excluir um usuário pelo ID
 app.delete('/v1/itermob/usuario/:id', async function (request, response) {
