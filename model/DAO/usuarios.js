@@ -151,6 +151,13 @@ const deleteUser = async function(id) {
     }
 };
 
+// const selectValidarUsuarioEmail = async (email, senha) => {
+
+//     try {
+//         let sql = `select id, email from tbl_usuario where email = '${email}' and senha = md5('${senha}')`
+//     }
+// }
+
 module.exports = {
     selectAllUsers,
     selectByIdUser,
