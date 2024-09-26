@@ -52,25 +52,26 @@ const insertUser = async function(dadosUsuario, dadosEndereco) {
 
         // console.log("esse é o sql: ", sqlUsuario)
 
-        let resultUsuario = await prisma.$queryRaw`INSERT INTO tbl_usuarios (cpf, nome, sobrenome, email, telefone, foto_perfil) VALUES (${dadosUsuario.cpf}, ${dadosUsuario.nome}, ${dadosUsuario.sobrenome}, ${dadosUsuario.email}, ${dadosUsuario.telefone}, ${dadosUsuario.foto_perfil});`;
+        let resultUsuario = await prisma.$queryRaw `INSERT INTO tbl_usuarios (cpf, nome, sobrenome, email, telefone, foto_perfil) VALUES (${dadosUsuario.cpf}, ${dadosUsuario.nome}, ${dadosUsuario.sobrenome}, ${dadosUsuario.email}, ${dadosUsuario.telefone}, ${dadosUsuario.foto_perfil}) RETURNING id;`;
 
-        let idUsuario = resultUsuario[0].id
+        let idUsuario = resultUsuario[0].id;
 
-        console.log(idUsuario,"o resultado foi esse: ", resultUsuario)
+
+        console.log(idUsuario, "o resultado foi esse: ", resultUsuario)
 
         if (resultUsuario) {
 
             if (dadosEndereco) {
                 let sqlEndereco = `
-                    INSERT INTO tbl_endereco (cep, rua, numero, cidade, bairro, estado, id_usuario) 
+                    INSERT INTO tbl_endereco (cep, rua, numero, cidade, bairro, estado, idUsuario) 
                     VALUES (?, ?, ?, ?, ?, ?, ?)
                 `;
-                let resultEndereco = await prisma.$executeRawUnsafe(sqlEndereco, dadosEndereco.cep, dadosEndereco.rua, dadosEndereco.numero, dadosEndereco.cidade, dadosEndereco.bairro, dadosEndereco.estado, idUsuario[0].id);
+                let resultEndereco = await prisma.$executeRawUnsafe(sqlEndereco, dadosEndereco.cep, dadosEndereco.rua, dadosEndereco.numero, dadosEndereco.cidade, dadosEndereco.bairro, dadosEndereco.estado, idUsuario);
 
                 return resultEndereco ? { id: idUsuario[0].id } : false;
             }
 
-            return { id: idUsuario[0].id };
+            return { id: idUsuario };
         } else {
             return false;
         }
@@ -149,6 +150,13 @@ const deleteUser = async function(id) {
         return false;
     }
 };
+
+// const selectValidarUsuarioEmail = async (email, senha) => {
+
+//     try {
+//         let sql = `select id, email from tbl_usuario where email = '${email}' and senha = md5('${senha}')`
+//     }
+// }
 
 module.exports = {
     selectAllUsers,

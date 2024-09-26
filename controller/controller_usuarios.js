@@ -1,4 +1,3 @@
-const bcrypt = require('bcrypt');
 const message = require('../modulo/config.js');
 const usuarioDAO = require('../model/DAO/usuarios.js');
 
